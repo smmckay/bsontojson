@@ -100,7 +100,7 @@ void transform_objectid(void)
 {
     int32_t val[3];
     fread(&val, 4, 3, stdin);
-    printf("\"%x%x%x\"", val[0], val[1], val[2]);
+    printf("\"%x%x%x\"", val[2], val[1], val[0]);
 }
 
 void transform_binary(void)
