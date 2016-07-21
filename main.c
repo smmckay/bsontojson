@@ -20,9 +20,18 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+int readchar(void)
+{
+    int c = getchar();
+    if (c == EOF) {
+        exit(1);
+    }
+    return c;
+}
+
 void transform_doc(int);
 
-void put_string_char(char c)
+void put_string_char(int c)
 {
     switch (c) {
     case '\b':
@@ -60,7 +69,7 @@ void transform_string(void)
     int string_count;
     fread(&string_count, sizeof(string_count), 1, stdin);
     for (int i = 0; i < string_count - 1; i++) {
-        put_string_char(getchar());
+        put_string_char(readchar());
     }
     getchar(); // discard \x00
     putchar('"');
@@ -101,18 +110,18 @@ void transform_binary(void)
     getchar();
     fputs("__binary", stdout);
     for (int i = 0; i < count; i++) {
-        getchar();
+        readchar();
     }
 }
 
 void transform_regex(void)
 {
     fputs("\"/", stdout);
-    for (char c = getchar(); c; c = getchar()) {
+    for (int c = readchar(); c; c = readchar()) {
         put_string_char(c);
     }
     putchar('/');
-    for (char c = getchar(); c; c = getchar()) {
+    for (int c = readchar(); c; c = readchar()) {
         put_string_char(c);
     }
     putchar('"');
@@ -152,7 +161,7 @@ void transform_value(char type)
         transform_objectid();
         break;
     case '\x08':
-        fputs(getchar() ? "true" : "false", stdout);
+        fputs(readchar() ? "true" : "false", stdout);
         break;
     case '\x09':
         transform_int64();
@@ -200,12 +209,16 @@ void transform_value(char type)
 
 void transform_doc(int is_array)
 {
+    // discard count field
+    for (int i = 0; i < 4; i++) {
+        if (getchar() == EOF) {
+            exit(0);
+        }
+    }
+
     putchar(is_array ? '[' : '{');
-
-    getchar(); getchar(); getchar(); getchar(); // discard count field
-
     for (int initial = 1; ; initial = 0) {
-        char type = getchar();
+        int type = readchar();
         if (!type) {
             break;  // end of doc
         }
@@ -216,12 +229,12 @@ void transform_doc(int is_array)
         if (!is_array) {
             putchar('"');
         }
-        char namechar = getchar();
+        int namechar = readchar();
         while (namechar) {
             if (!is_array) {
                 put_string_char(namechar);
             }
-            namechar = getchar();
+            namechar = readchar();
         }
         if (!is_array) {
             fputs("\":", stdout);
